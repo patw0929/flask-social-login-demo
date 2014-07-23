@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from flask import Flask, render_template, request, make_response, redirect, session
 from authomatic.adapters import WerkzeugAdapter
 from authomatic import Authomatic
