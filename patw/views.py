@@ -35,7 +35,6 @@ def login(provider_name):
                   url = 'https://graph.facebook.com/v2.0/me/friends'
                   response = result.provider.access(url)
                   if response.status == 200:
-                      print "ok"
                       friends = response.data.get("data", {})
 
                       session["friends"] = friends
@@ -48,10 +47,6 @@ def login(provider_name):
                         friends = response.data.get("users", {})
 
                         session["friends"] = friends
-
-                        if friends:
-                            for friend in friends:
-                                print friend.get("name", {}) #profile_image_url
 
 
                 if result.provider.name == 'google':
@@ -75,7 +70,6 @@ def login(provider_name):
                                     friends.append({'name': name, 'email': email})
 
                             session["friends"] = friends
-                            print friends
 
                     else:
                         print 'error!'
