@@ -14,9 +14,9 @@ def deploy_local(dir="/var/www/flask-patw"):
     restart_services()
 
 def deploy(version="master"):
-    run('rm -rf %s' % version)
-    run('mkdir %s' % version)
+    run('rm -rf flask-social-login-demo')
+    run('mkdir flask-social-login-demo')
     with cd(version):
         run('git clone -b %s git@github.com:patw0929/flask-social-login-demo.git' % version)
-    with cd("%s/patw" % version):
-        run('fab deploy_local:dir=/var/www/%s' % version)
+    with cd("flask-social-login-demo"):
+        run('fab deploy_local:dir=/var/www/flask-patw')
