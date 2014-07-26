@@ -10,7 +10,7 @@ app = Flask(__name__)
 app.config.from_object('patw.default_settings')
 
 # Instantiate Authomatic.
-authomatic = Authomatic(CONFIG, 'patw!@#$%^', report_errors=False)
+authomatic = Authomatic(CONFIG, 'patw!@#$%^', session = session, report_errors=False)
 
 @app.route('/')
 def index():
@@ -19,16 +19,14 @@ def index():
 @app.route('/login/<provider_name>/', methods=['GET', 'POST'])
 def login(provider_name):
     response = make_response()
-    result = authomatic.login(WerkzeugAdapter(request, response), provider_name)
-
-    session["user"] = ""
-    session["friends"] = ""
+    try:
+        result = authomatic.login(WerkzeugAdapter(request, response), provider_name)
+    except:
+        return redirect("/")
 
     if result:
         if result.user:
             result.user.update()
-
-            session["user"] = { "name": result.user.name, "id": result.user.id, "email": result.user.email }
 
             if result.user.credentials:
                 if result.provider.name == 'fb':
@@ -37,8 +35,6 @@ def login(provider_name):
                   if response.status == 200:
                       friends = response.data.get("data", {})
 
-                      session["friends"] = friends
-
 
                 if result.provider.name == 'tw':
                    url = 'https://api.twitter.com/1.1/friends/list.json'
@@ -46,42 +42,38 @@ def login(provider_name):
                    if response.status == 200:
                         friends = response.data.get("users", {})
 
-                        session["friends"] = friends
-
 
                 if result.provider.name == 'google':
-                    url = 'https://www.google.com/m8/feeds/contacts/default/full?alt=json&max-results=300&sortorder=descending'
-                    response = result.provider.access(url)
-                    if response.status == 200:
+                    start = 1
+                    data = None
+                    friends = []
 
-                        contacts = response.data.get('feed', {}).get('entry', [])
-                        error = response.data.get('error', {})
+                    while start == 1 or 'entry' in data['feed']:
+                        url = 'https://www.google.com/m8/feeds/contacts/default/full?alt=json&max-results=50&start-index=%s'
+                        response = result.provider.access(url % start)
+                        if response.status == 200:
 
-                        if error:
-                            print u'Damn that error: {}!'.format(error)
-                        elif contacts:
-                            friends = []
-                            for contact in contacts:
+                            data = response.data
+                            contacts = response.data.get('feed', {}).get('entry', [])
+                            error = response.data.get('error', {})
 
-                                if u'gd$phoneNumber' in contact and u'gd$email' in contact:
-                                    name = contact.get('title', {}).get('$t', '')
-                                    email = contact.get('gd$email', {})[0].get('address', '')
-                                    phone = contact.get('gd$phoneNumber', {})[0].get('$t', '')
-                                    friends.append({'name': name, 'email': email, 'phone': phone})
+                            if error:
+                                print u'Damn that error: {}!'.format(error)
+                            elif contacts:
+                                for contact in contacts:
 
-                            session["friends"] = friends
+                                    if u'gd$phoneNumber' in contact:
+                                        name = contact.get('title', {'$t': ''}).get('$t', '')
+                                        email = contact.get('gd$email', [{'address': ''}])[0].get('address', '')
+                                        phone = contact.get('gd$phoneNumber', [{'$t': ''}])[0].get('$t', '')
+                                        friends.append({'name': name, 'email': email, 'phone': phone})
 
-                    else:
-                        print 'error!'
-                        print u'Status: {}'.format(response.status)
+                        else:
+                            print 'error!'
+                            print u'Status: {}'.format(response.status)
 
-        return redirect("welcome")
+                        start += 50
+
+        return render_template("welcome.html", user = result.user, friends = friends)
 
     return response
-
-@app.route("/welcome")
-def welcome():
-    user = session["user"]
-    friends = session["friends"]
-
-    return render_template("welcome.html", user = user, friends = friends)
