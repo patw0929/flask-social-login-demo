@@ -50,7 +50,7 @@ def login(provider_name):
 
 
                 if result.provider.name == 'google':
-                    url = 'https://www.google.com/m8/feeds/contacts/default/full?alt=json'
+                    url = 'https://www.google.com/m8/feeds/contacts/default/full?alt=json&max-results=300&sortorder=descending'
                     response = result.provider.access(url)
                     if response.status == 200:
 
@@ -63,11 +63,11 @@ def login(provider_name):
                             friends = []
                             for contact in contacts:
 
-                                name = contact.get('title', {}).get('$t', '')
-                                email = contact.get('gd$email', {})[0].get('address', '')
-
-                                if name != '':
-                                    friends.append({'name': name, 'email': email})
+                                if u'gd$phoneNumber' in contact and u'gd$email' in contact:
+                                    name = contact.get('title', {}).get('$t', '')
+                                    email = contact.get('gd$email', {})[0].get('address', '')
+                                    phone = contact.get('gd$phoneNumber', {})[0].get('$t', '')
+                                    friends.append({'name': name, 'email': email, 'phone': phone})
 
                             session["friends"] = friends
 

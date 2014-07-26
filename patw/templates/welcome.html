@@ -15,6 +15,7 @@
     <li>
       {{ friend.name }}
       {% if friend.email %}({{ friend.email }}){% endif %}
+      {% if friend.phone %}({{ friend.phone }}){% endif %}
     </li>
   {% endfor %}
   </ul>
